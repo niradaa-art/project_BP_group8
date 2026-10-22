@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบวิเคราะห์งบประมาณรายจังหวัด (Provincial Budget Intelligence)</title>
+  
+  <!-- Plotly.js CDN -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">🏛️</div>
+        <div class="brand-text">
+          <h2>BUDGET INTEL</h2>
+          <span>วิเคราะห์งบประมาณ พ.ศ. 2566</span>
+        </div>
+      </div>
+
+      <!-- Navigation Menu (5 Thai Views) -->
+      <ul class="nav-menu">
+        <li>
+          <a class="nav-item active" data-tab="overview">
+            <span class="nav-icon">📊</span>
+            <span>ภาพรวมงบประมาณ</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-item" data-tab="province">
+            <span class="nav-icon">🔎</span>
+            <span>วิเคราะห์รายจังหวัด</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-item" data-tab="economy">
+            <span class="nav-icon">📈</span>
+            <span>งบประมาณและเศรษฐกิจจังหวัด</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-item" data-tab="party">
+            <span class="nav-icon">🗳️</span>
+            <span>พรรคการเมืองและเศรษฐกิจจังหวัด</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Sidebar Global Filters -->
+      <div class="sidebar-filters">
+        <h4>ตัวกรองส่วนกลาง</h4>
+        <div class="filter-group">
+          <label for="filter-region">ภูมิภาค</label>
+          <select id="filter-region" class="select-control">
+            <option value="ทุกภูมิภาค">ทุกภูมิภาค</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-ministry">กระทรวง</label>
+          <select id="filter-ministry" class="select-control">
+            <option value="ทุกกระทรวง">ทุกกระทรวง</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-objc">ประเภทงบรายจ่าย</label>
+          <select id="filter-objc" class="select-control">
+            <option value="ทุกประเภทงบ">ทุกประเภทงบ</option>
+          </select>
+        </div>
+        <button id="btn-clear-all" class="btn-reset-filters">ล้างตัวกรองทั้งหมด</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Navigation & Active Filter Bar -->
+      <header class="topbar">
+        <div class="page-title">
+          <h1 id="view-title">ระบบวิเคราะห์งบประมาณรายจังหวัดของประเทศไทย</h1>
+          <p id="view-subtitle">เชื่อมโยงข้อมูลการจัดสรรงบประมาณ ผลิตภัณฑ์มวลรวม (GPP) และโครงสร้างเศรษฐกิจเชิงพื้นที่</p>
+        </div>
+        <div class="active-filters-bar" id="active-filters">
+          <!-- Filter chips dynamically injected here -->
+        </div>
+      </header>
+
+      <!-- ===================================================================
+           VIEW 1: ภาพรวมงบประมาณ (Budget Overview)
+           =================================================================== -->
+      <section id="view-overview" class="dashboard-view active">
+        
+        <!-- Selection Banner (shown when a province is picked) -->
+        <div id="overview-selection-banner" class="selection-banner" style="display: none; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:#f59e0b;font-weight:600;">📍 ไฮไลต์จังหวัด:</span>
+            <strong id="selected-prov-name-banner" style="color:#fff;font-size:16px;"></strong>
+            <span style="font-size:12px;margin-left:6px;color:#94a3b8;">(คลิกจังหวัดเดิมซ้ำบนแผนที่/แท่งกราฟ หรือกดปุ่มเพื่อยกเลิก)</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button id="btn-banner-drilldown" class="btn-clear" style="background:rgba(6,182,212,0.25);border-color:var(--accent-cyan);color:#67e8f9;">🔍 ไปหน้าเจาะลึกจังหวัดนี้</button>
+            <button id="btn-clear-prov-banner" class="btn-clear">ยกเลิกไฮไลต์ (✕)</button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">งบประมาณรวมทั้งสิ้น</div>
+            <div class="kpi-value"><span id="kpi-total-budget">-</span> <span class="kpi-unit">ล้านบาท</span></div>
+            <div class="kpi-sub">17,408 รายการจัดสรร</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">งบประมาณส่วนกลาง</div>
+            <div class="kpi-value"><span id="kpi-central-budget">-</span> <span class="kpi-unit">ล้านบาท</span></div>
+            <div class="kpi-sub" id="kpi-central-share">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">งบประมาณระดับจังหวัด</div>
+            <div class="kpi-value"><span id="kpi-prov-budget">-</span> <span class="kpi-unit">ล้านบาท</span></div>
+            <div class="kpi-sub" id="kpi-prov-share">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">จังหวัดที่ได้รับงบสูงสุด</div>
+            <div class="kpi-value" style="font-size:20px;" id="kpi-top-province">-</div>
+            <div class="kpi-sub" id="kpi-top-val">-</div>
+          </div>
+        </div>
+
+        <!-- Thailand Geographic Map Section -->
+        <div class="glass-card" style="margin-bottom: 24px;">
+          <div class="card-header">
+            <span class="card-title">🗺️ แผนที่งบประมาณและเศรษฐกิจรายจังหวัดของประเทศไทย (Thailand Geographic Map)</span>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <label for="map-metric-select" style="font-size:12px;color:var(--text-muted);">เลือกตัวชี้วัดบนแผนที่:</label>
+              <select id="map-metric-select" class="select-control" style="width:230px;padding:4px 8px;font-size:12px;">
+                <option value="budget_million">งบประมาณรายจังหวัด (ล้านบาท)</option>
+                <option value="budget_per_capita_thb">งบประมาณต่อหัว (บาท/คน)</option>
+                <option value="gpp_million">ผลิตภัณฑ์มวลรวม GPP (ล้านบาท)</option>
+                <option value="gpp_per_capita_thb">GPP ต่อหัวประชากร (บาท/คน)</option>
+              </select>
+              <span class="card-badge">คลิกจังหวัดบนแผนที่หรือแท่งกราฟเพื่อไฮไลต์</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns: 2fr 1fr;gap:20px;align-items:center;">
+            <div id="chart-thailand-map" style="height: 520px; width: 100%;"></div>
+            <div id="map-province-info" style="background: rgba(8, 13, 26, 0.6); border: 1px solid var(--border-card); border-radius: 12px; padding: 20px; transition: all 0.3s ease;">
+              <h3 id="map-info-title" style="color: #fff; font-size: 18px; margin-bottom: 6px;">คลิกที่จังหวัดบนแผนที่</h3>
+              <p id="map-info-sub" style="color: var(--accent-cyan); font-size: 13px; margin-bottom: 16px;">เพื่อดูสรุปข้อมูลเชิงพื้นที่และไฮไลต์เปรียบเทียบ</p>
+              <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;">
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                  <span style="color:var(--text-muted);">ภูมิภาค:</span>
+                  <strong id="map-info-region" style="color:#67e8f9;">-</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                  <span style="color:var(--text-muted);">งบประมาณที่ได้รับ:</span>
+                  <strong id="map-info-budget" style="color:#67e8f9;">-</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                  <span style="color:var(--text-muted);">งบประมาณต่อหัว:</span>
+                  <strong id="map-info-capita" style="color:#67e8f9;">-</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                  <span style="color:var(--text-muted);">ผลิตภัณฑ์มวลรวม (GPP):</span>
+                  <strong id="map-info-gpp" style="color:#67e8f9;">-</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                  <span style="color:var(--text-muted);">GPP ต่อหัวประชากร:</span>
+                  <strong id="map-info-gpp-capita" style="color:#67e8f9;">-</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;">
+                  <span style="color:var(--text-muted);">พรรคการเมืองที่ชนะ:</span>
+                  <strong id="map-info-party" style="color:#67e8f9;">-</strong>
+                </div>
+              </div>
+              <button id="btn-map-drilldown" class="btn-reset-filters" style="margin-top:18px;background:rgba(6,182,212,0.15);border-color:rgba(6,182,212,0.4);color:#67e8f9;">
+                🔍 ไปยังหน้าเจาะลึกจังหวัดนี้
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 1: Rankings (Top 10 / Bottom 10) -->
+        <div class="charts-grid-2">
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">🏆 10 อันดับจังหวัดที่ได้รับงบประมาณสูงสุด</span>
+              <span class="card-badge">คลิกแท่งเพื่อเจาะลึก</span>
+            </div>
+            <div id="chart-top-provinces" class="chart-container"></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">📉 10 อันดับจังหวัดที่ได้รับงบประมาณน้อยที่สุด</span>
+              <span class="card-badge">คลิกแท่งเพื่อเจาะลึก</span>
+            </div>
+            <div id="chart-bottom-provinces" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- Row 2: Structure by Object & Ministry -->
+        <div class="charts-grid-2">
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">🍩 โครงสร้างประเภทงบรายจ่าย (5 หมวด)</span>
+              <span class="card-badge">คลิกเสี้ยวเพื่อกรอง</span>
+            </div>
+            <div id="chart-objc-donut" class="chart-container"></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">🏢 10 อันดับกระทรวงที่ได้รับงบประมาณสูงสุด</span>
+              <span class="card-badge">คลิกแท่งเพื่อกรอง</span>
+            </div>
+            <div id="chart-top-ministries" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- Overview Detail Table -->
+        <div class="glass-card" style="margin-top:20px;">
+          <div class="card-header">
+            <span class="card-title">📋 สรุปรายละเอียดงบประมาณจำแนกตามประเภทรายจ่าย</span>
+          </div>
+          <div class="data-table-container">
+            <table class="data-table" id="table-objc-overview"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 2: วิเคราะห์รายจังหวัด (Provincial Deep Dive)
+           =================================================================== -->
+      <section id="view-province" class="dashboard-view">
+        <div class="glass-card" style="margin-bottom:20px;padding:16px 20px;">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <label for="province-selector" style="font-weight:600;color:#fff;">📍 เลือกจังหวัดที่ต้องการเจาะลึก:</label>
+              <select id="province-selector" class="select-control" style="max-width:300px;font-size:15px;font-weight:600;"></select>
+            </div>
+            <div style="font-size:15px;color:var(--text-muted);">
+              กำลังวิเคราะห์: <strong id="pkpi-name" style="color:var(--accent-cyan);font-size:17px;">-</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Province KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">งบประมาณที่ได้รับ</div>
+            <div class="kpi-value"><span id="pkpi-budget">-</span> <span class="kpi-unit">ล้านบาท</span></div>
+            <div class="kpi-sub" id="pkpi-budget-rank">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">งบประมาณต่อหัว</div>
+            <div class="kpi-value"><span id="pkpi-capita">-</span> <span class="kpi-unit">บาท/คน</span></div>
+            <div class="kpi-sub" id="pkpi-capita-rank">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">ผลิตภัณฑ์มวลรวม (GPP)</div>
+            <div class="kpi-value"><span id="pkpi-gpp">-</span> <span class="kpi-unit">ล้านบาท</span></div>
+            <div class="kpi-sub" id="pkpi-gpp-rank">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">GPP ต่อหัวประชากร</div>
+            <div class="kpi-value"><span id="pkpi-gpp-capita">-</span> <span class="kpi-unit">บาท/คน</span></div>
+            <div class="kpi-sub" id="pkpi-gpp-capita-rank">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">พรรคการเมืองที่ชนะ</div>
+            <div class="kpi-value" style="font-size:20px;" id="pkpi-party">-</div>
+            <div class="kpi-sub" id="pkpi-region">-</div>
+          </div>
+        </div>
+
+        <!-- Row: Donut Structure & 29-year Historical GPP -->
+        <div class="charts-grid-2">
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">🍰 สัดส่วนประเภทงบประมาณของจังหวัดนี้</span>
+            </div>
+            <div id="chart-prov-objc" class="chart-container"></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">🏢 สัดส่วนงบประมาณจำแนกตามกระทรวงในจังหวัดนี้ (ปี 2566)</span>
+            </div>
+            <div id="chart-prov-ministry" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- Row: Peer Comparison & Top Agencies -->
+        <div class="charts-grid-2">
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">👥 เปรียบเทียบงบประมาณกับกลุ่มจังหวัดในภาคเดียวกัน (ปี 2566)</span>
+            </div>
+            <div id="chart-prov-peers" class="chart-container"></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">🏛️ หน่วยงานที่ได้รับการจัดสรรงบประมาณสูงสุดในจังหวัดนี้</span>
+            </div>
+            <div id="chart-prov-agencies" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- Province Line Items Table -->
+        <div class="glass-card" style="margin-top:20px;">
+          <div class="card-header">
+            <span class="card-title">📑 รายการโครงการงบประมาณสำคัญในจังหวัดนี้</span>
+          </div>
+          <div class="data-table-container">
+            <table class="data-table" id="table-prov-items"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 3: งบประมาณและเศรษฐกิจจังหวัด (Budget × GPP)
+           =================================================================== -->
+      <section id="view-economy" class="dashboard-view">
+        <!-- Interactive Controls -->
+        <div class="glass-card controls-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-outliers-econ" checked>
+            <span>⚡ <b>ไม่รวม กรุงเทพฯ และ นนทบุรี</b> (ป้องกันการบิดเบือนจากที่ตั้งกระทรวง)</span>
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-percapita-econ">
+            <span>👤 แสดงผลแบบ <b>ต่อหัวประชากร (Per Capita)</b></span>
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-logscale-econ">
+            <span>📐 ใช้สเกล <b>Logarithmic (Log Scale)</b></span>
+          </label>
+        </div>
+
+        <!-- Correlation KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">จำนวนจังหวัดที่วิเคราะห์</div>
+            <div class="kpi-value" id="econ-stat-count">-</div>
+            <div class="kpi-sub">ครอบคลุมทั่วประเทศ</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Pearson Correlation (r)</div>
+            <div class="kpi-value" id="econ-stat-pearson">-</div>
+            <div class="kpi-sub">ความสัมพันธ์เชิงเส้นตรง</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Spearman Correlation (r)</div>
+            <div class="kpi-value" id="econ-stat-spearman">-</div>
+            <div class="kpi-sub">ความสัมพันธ์เชิงอันดับ</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">นัยสำคัญทางสถิติ (p-value)</div>
+            <div class="kpi-value" id="econ-stat-pval">-</div>
+            <div class="kpi-sub">ความน่าเชื่อถือทางสถิติ</div>
+          </div>
+        </div>
+
+        <!-- Scatter Plot with Quadrants -->
+        <div class="glass-card">
+          <div class="card-header">
+            <span class="card-title">🎯 แผนภาพกระจายตัวความสัมพันธ์ (Budget vs GPP Quadrant Analysis)</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="card-badge" style="color:var(--accent-cyan);border-color:rgba(6,182,212,0.3);">🔘 ขนาดของจุด = จำนวนประชากร</span>
+              <span class="card-badge">คลิกจุดเพื่อเลือกจังหวัด</span>
+            </div>
+          </div>
+          <div id="chart-econ-scatter" style="height: 500px;"></div>
+        </div>
+
+        <!-- Quadrants Detail Table -->
+        <div class="glass-card" style="margin-top:20px;">
+          <div class="card-header">
+            <span class="card-title">🧭 ตารางจัดกลุ่มจังหวัดตาม Quadrant (แบ่งตามค่ามัธยฐาน)</span>
+          </div>
+          <div class="data-table-container">
+            <table class="data-table" id="table-econ-quadrants"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 4: พรรคการเมืองและเศรษฐกิจจังหวัด (Party × GPP)
+           =================================================================== -->
+      <section id="view-party" class="dashboard-view">
+        <!-- Critical Methodological Notice Banner -->
+        <div class="notice-card">
+          <b>⚠️ ข้อพึงระวังด้านระเบียบวิธีวิจัยและการแปลผล (Methodological Disclaimer):</b><br>
+          1. <b>ห้ามสรุปว่าพรรคการเมืองเป็นสาเหตุของการเติบโตทางเศรษฐกิจ (Correlation ≠ Causation):</b> การเลือกตั้งทั่วไปจัดขึ้นในเดือน พฤษภาคม 2566 ในขณะที่ พ.ร.บ. งบประมาณรายจ่าย พ.ศ. 2566 จัดทำขึ้นล่วงหน้าในปี 2565 ในยุครัฐบาลชุดก่อนหน้า<br>
+          2. <b>ปัจจัยเชิงโครงสร้างระยะยาว:</b> ขนาด GPP ของแต่ละจังหวัดถูกกำหนดโดยปัจจัยทางภูมิศาสตร์ เช่น ฐานนิคมอุตสาหกรรมในภาคตะวันออก (EEC) และแหล่งท่องเที่ยว ไม่ได้เกิดจากการเลือกตั้งครั้งเดียว
+        </div>
+
+        <div class="glass-card controls-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggle-outliers-party" checked>
+            <span>⚡ ไม่รวม กรุงเทพฯ และ นนทบุรี ในการวิเคราะห์พรรคการเมือง</span>
+          </label>
+        </div>
+
+        <!-- Party Summary Statistics Table -->
+        <div class="glass-card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <span class="card-title">📊 ตารางสรุปภาพรวมงบประมาณและเศรษฐกิจจำแนกตามพรรคการเมือง</span>
+          </div>
+          <div class="data-table-container">
+            <table class="data-table" id="table-party-summary"></table>
+          </div>
+        </div>
+
+        <!-- Grid: Box Plot & Bubble Scatter -->
+        <div class="charts-grid-2">
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">📦 การกระจายตัวของ GPP ตามพรรคการเมือง (Box Plot)</span>
+              <span class="card-badge">คลิกเพื่อกรองพรรค</span>
+            </div>
+            <div id="chart-party-box" class="chart-container"></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-header">
+              <span class="card-title">🔮 การกระจายตัวของงบประมาณและ GPP จำแนกสีตามพรรค</span>
+              <div style="display:flex;gap:8px;align-items:center;">
+              <span class="card-badge" style="color:var(--accent-cyan);border-color:rgba(6,182,212,0.3);">🔘 ขนาดจุด = จำนวนประชากร</span>
+              <span class="card-badge">คลิกจุดเพื่อดูจังหวัด</span>
+            </div>
+            </div>
+            <div id="chart-party-bubble" class="chart-container"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="/static/js/state.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/charts.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
