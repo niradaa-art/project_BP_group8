@@ -1,17 +1,18 @@
 # Provincial Budget Intelligence Dashboard (Thailand FY 2566)
 ### ระบบวิเคราะห์งบประมาณรายจังหวัด ผลิตภัณฑ์มวลรวม (GPP) และเศรษฐกิจการเมืองไทยเชิงพื้นที่
-**พัฒนาตามข้อกำหนด HANDOFF ADDENDUM: เทคโนโลยี FastAPI + Modern Glassmorphism Frontend + Plotly.js (ไม่ใช้ Streamlit)**
+**สถาปัตยกรรมระดับองค์กร: FastAPI Backend + Modern Glassmorphism Single-Page Application (Plotly.js + Vanilla JS)**
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
 [![Plotly.js](https://img.shields.io/badge/Plotly.js-2.35+-3F4F75.svg)](https://plotly.com/javascript/)
-[![Tests](https://img.shields.io/badge/Tests-19%20Passed-success.svg)]()
+[![Data Year](https://img.shields.io/badge/Data%20Scope-FY%202566%20Only-emerald.svg)]()
+[![Cloud Ready](https://img.shields.io/badge/Deploy-Render%20%7C%20Docker-purple.svg)]()
 
 ---
 
-## 📌 ข้อมูลโครงงานเดิมและแหล่งอ้างอิง
+## 📌 ข้อมูลโครงงานและแหล่งอ้างอิง
 - **ชุดข้อมูลต้นฉบับ**: [Google Drive Folder](https://drive.google.com/drive/folders/1m6hp8l6iMB1u-a1yNK4laewgrUTy_Bnl?usp=drive_link)
-- **สไลด์นำเสนอ**: [Canva Presentation](https://canva.link/ulpsfg5b8synm67)
+- **สไลด์นำเสนอโครงงาน**: [Canva Presentation](https://canva.link/ulpsfg5b8synm67)
 - **สมาชิกกลุ่ม 8 (MONEY_knock_everyting)**:
   - ณิรดา อนุนิวัฒน์ — Data Engineering & Preparation
   - ธนพล — Data Analysis & Questions Formulation
@@ -20,128 +21,145 @@
 
 ---
 
-## 📖 สถาปัตยกรรมและเทคโนโลยีที่ใช้ (Tech Stack)
-ระบบได้รับการพัฒนาใหม่ทั้งหมดตามข้อกำหนด **HANDOFF ADDENDUM** โดยไม่ใช้ Streamlit เพื่อให้สามารถควบคุมการออกแบบ UI ได้อย่างละเอียดแบบพิกเซลต่อพิกเซล และรองรับการเชื่อมโยงปฏิสัมพันธ์ข้ามกราฟ (Cross-Chart Linked Brushing):
+## 🎯 จุดเด่นและขอบเขตของระบบ (Key Features & Scope)
 
-- **Backend**: **Python 3.12 + FastAPI + Uvicorn**
-  - สถาปัตยกรรม RESTful API แบบอะซิงโครนัส (Async/Await)
-  - ประมวลผลและคำนวณสถิติด้วย **Pandas**, **NumPy**, และ **SciPy**
-  - กรองและใช้ข้อมูลปีงบประมาณ **พ.ศ. 2566** อย่างเคร่งครัด 100%
-- **Frontend**: **Modern Vanilla HTML5, CSS3 และ JavaScript (ES6+)**
-  - ไม่พึ่งพาเฟรมเวิร์กขนาดใหญ่ โหลดเร็วและลื่นไหล
-  - ดีไซน์ระบบ **Glassmorphism บนพื้นหลังสีกรมท่าเข้ม (Deep Navy & Indigo Glow)**
-  - การ์ดโปร่งแสง (Translucent Cards) พร้อมเส้นขอบเรืองแสงสี Cyan (`#06b6d4`) และ Amber (`#f59e0b`)
-  - ฟอนต์ภาษาไทย **Sarabun** รองรับทุกขนาดหน้าจอ (Desktop, Tablet, Mobile)
-- **Interactive Visualizations**: **Plotly.js**
-  - กราฟทุกกราฟตอบสนองต่อการคลิก (Click Events), ไฮไลต์เชื่อมโยง (Linked Brushing) และมี Tooltip ภาษาไทยสมบูรณ์
-- **State Management**: **Shared Filter State Bus (`static/js/state.js`)**
-  - จัดการสถานะตัวกรองส่วนกลาง และอัปเดตกราฟที่เกี่ยวข้องพร้อมกันโดยไม่กะพริบหน้าจอ
+1. **เจาะจงข้อมูลปีงบประมาณ พ.ศ. 2566 (FY 2566 Strict Filtering)**:
+   - กรองและใช้เฉพาะข้อมูลปี 2566 ทั้งงบประมาณแผ่นดิน (3.18 ล้านล้านบาท), ขนาดเศรษฐกิจ (GPP), ประชากร และผลการเลือกตั้งทั่วไปปี 2566
+   - ปราศจากข้อมูลปีย้อนหลัง เพื่อให้การวิเคราะห์เชิงเปรียบเทียบในมิติต่าง ๆ อยู่บนฐานเวลาเดียวกัน 100%
+
+2. **ระบบไฮไลต์เชื่อมโยงข้ามกราฟ (Cross-Chart Linked Highlighting)**:
+   - เมื่อคลิกจังหวัดใดบนแผนที่ประเทศไทย หรือแท่งกราฟ Top 10 / Bottom 10 จังหวัดนั้นจะถูกเน้นด้วย **สีส้มทอง (Amber Gold `#f59e0b`)** พร้อมขอบสีขาวหนา
+   - กล่องสรุปข้อมูลข้างแผนที่และแถบสถานะ (Selection Banner) จะเรืองแสงและอัปเดตข้อมูลของจังหวัดนั้นทันที พร้อมปุ่มลัดไปยังหน้าเจาะลึก
+   - รองรับระบบ Toggle (คลิกซ้ำเพื่อยกเลิกการเลือก) คืนสู่สภาวะภาพรวมอย่างราบรื่น
+
+3. **วิเคราะห์ 4 แดนเศรษฐกิจการคลัง (Budget vs GPP Quadrant Analysis)**:
+   - ใช้ **ค่ามัธยฐาน (Median)** ของประเทศเป็นเส้นตัดกึ่งกลาง เพื่อป้องกันปัญหาค่าเฉลี่ยถูกดึงจากความเบ้ของข้อมูล (Skewness)
+   - ขนาดของจุด (Bubble Size) แปรผันตรงกับจำนวนประชากรตามสูตร $\text{Size} = \frac{\sqrt{\text{Population}}}{75}$ สะท้อนมิติประชากรในพื้นที่จริง
+
+4. **ข้อจำกัดเชิงระเบียบวิธีวิจัย (Academic Methodological Notice)**:
+   - มีกล่องเตือนทางวิชาการระบุชัดเจนว่า **Correlation $\neq$ Causation** เนื่องจาก พ.ร.บ. งบประมาณ 2566 จัดทำขึ้นล่วงหน้าในปี 2565 ก่อนการเลือกตั้งทั่วไปในเดือน พ.ค. 2566
 
 ---
 
-## 🗺️ เมนูและโครงสร้างการวิเคราะห์ 4 หน้าหลัก (Thai Navigation Views)
+## 📖 สถาปัตยกรรมและเทคโนโลยี (Tech Stack)
+
+- **Backend**: **Python 3.12 + FastAPI + Uvicorn**
+  - RESTful API แบบอะซิงโครนัส ประมวลผลรวดเร็วด้วย **Pandas**, **NumPy**, และ **SciPy**
+  - รองรับ Cross-Origin Resource Sharing (CORS) และการเข้าถึงจากทั้ง Localhost, LAN IP และ Cloud
+- **Frontend**: **Modern Vanilla HTML5, CSS3, JavaScript (ES6+)**
+  - โครงสร้าง Single-Page Application (SPA) น้ำหนักเบา ไม่พึ่งพาเฟรมเวิร์กขนาดใหญ่
+  - ธีม **Glassmorphism สีกรมท่าเข้ม (`#080d1a`)** พร้อมเส้นขอบเรืองแสง Cyan และ Amber
+  - ฟอนต์ภาษาไทย **Sarabun** ออกแบบ Responsive รองรับทั้งคอมพิวเตอร์ แท็บเล็ต และสมาร์ทโฟน
+- **Visualizations**: **Plotly.js**
+  - กราฟทุกตัวรองรับการคลิกโต้ตอบ (Interactive Events) และมี Tooltip ภาษาไทยครบถ้วน
+- **State Management**: **Shared Filter State Bus (`static/js/state.js`)**
+  - จัดการสถานะตัวกรองส่วนกลาง และกระจาย Event ไปอัปเดตกราฟที่เกี่ยวข้องพร้อมกัน
+
+---
+
+## 🗺️ โครงสร้างการวิเคราะห์ 4 หน้าหลัก (Navigation Views)
 
 ### 1. 📊 ภาพรวมงบประมาณ (Budget Overview)
-- การ์ดสรุป KPI ระดับชาติ: งบประมาณรวมแผ่นดิน 3.18 ล้านล้านบาท, งบส่วนกลาง 5.90 แสนล้านบาท (18.55%), งบระดับจังหวัด 2.59 ล้านล้านบาท (81.45%)
+- การ์ดสรุป KPI ระดับชาติ: งบประมาณรวมแผ่นดิน 3.18 ล้านล้านบาท, งบส่วนกลาง 5.90 แสนล้านบาท (18.55%), งบระดับจังหวัด 2.59 ล้านล้านบาท (81.45%), และจังหวัดที่ได้รับงบสูงสุด
 - **แผนที่ภูมิศาสตร์ประเทศไทย (Thailand Geographic Choropleth Map)**:
-  - แสดงการกระจายตัวของงบประมาณ, งบต่อหัว, GPP และ GPP ต่อหัว
-  - **ระบบไฮไลต์เมื่อคลิก (Interactive Linked Highlighting)**: คลิกจังหวัดใดบนแผนที่เพื่อไฮไลต์ด้วยสีส้มทอง (`#f59e0b`) ขอบขาวหนา และคลิกซ้ำเพื่อยกเลิกไฮไลต์
-- **กล่องสรุปข้อมูลข้างแผนที่ (Side Info Card)**: แสดงข้อมูล 2566 ครบถ้วน (งบประมาณ, งบต่อหัว, GPP, GPP ต่อหัว, พรรคที่ชนะ) พร้อมปุ่มด่วนเจาะลึก
-- **กราฟแท่งจัดอันดับ (Top 10 & Bottom 10)**: เชื่อมโยงสีไฮไลต์กับแผนที่โดยตรง
-- **กราฟโดนัทประเภทงบประมาณ & กราฟแท่ง 10 อันดับกระทรวง**
-- **แถบแจ้งเตือนจังหวัดที่ไฮไลต์ (Selection Banner)**: พร้อมปุ่มไปหน้าเจาะลึกและปุ่มยกเลิกไฮไลต์
+  - สลับดูตัวชี้วัดได้ 4 รูปแบบ: งบประมาณ, งบต่อหัว, GPP, และ GPP ต่อหัว
+  - ระบบ Interactive Click & Highlight เชื่อมโยงสีส้มทอง
+- **กล่องข้อมูลข้างแผนที่ (Side Info Card)**: แสดงรายละเอียดของจังหวัดที่ไฮไลต์ พร้อมปุ่มด่วนเจาะลึก
+- **กราฟแท่งแนวนอน 10 อันดับงบสูงสุดและต่ำสุด**: เชื่อมโยงสถานะการเลือกกับแผนที่
+- **กราฟโดนัทจำแนกตามประเภทงบรายจ่าย & กราฟแท่ง 10 อันดับกระทรวง**
+- **แถบแจ้งเตือนสถานะการไฮไลต์ (Selection Banner)**: พร้อมปุ่มยกเลิกไฮไลต์และปุ่มเจาะลึก
 
 ### 2. 🔎 วิเคราะห์รายจังหวัด (Provincial Deep Dive)
-- กล่องค้นหาและเลือกจังหวัดแบบ Dropdown (77 จังหวัด)
-- การ์ด 5 ตัวชี้วัดสำคัญของจังหวัด: งบที่ได้รับ, งบต่อหัว (บาท/คน), ผลิตภัณฑ์มวลรวม (GPP), GPP ต่อหัว, และพรรคการเมืองที่ชนะ
-- กราฟโดนัทแสดงสัดส่วนประเภทงบรายจ่ายของจังหวัดนี้ (ปี 2566)
+- กล่องเลือกจังหวัด Dropdown (77 จังหวัด) พร้อมระบบ Auto-fill เมื่อคลิกมาจากหน้าอื่น
+- การ์ด 5 ตัวชี้วัดสำคัญของจังหวัด: งบประมาณที่ได้รับ, งบต่อหัว (บาท/คน), ผลิตภัณฑ์มวลรวม (GPP), GPP ต่อหัว, และพรรคการเมืองที่ชนะ
+- กราฟโดนัทแสดงสัดส่วนประเภทงบประมาณของจังหวัดนี้ (ปี 2566)
 - กราฟแท่งสัดส่วนงบประมาณจำแนกตามกระทรวงในจังหวัดนี้ (ปี 2566)
-- กราฟเปรียบเทียบในกลุ่มจังหวัดใกล้เคียง (Peer Comparison) พร้อมเส้นค่าเฉลี่ยของภูมิภาคและมัธยฐานประเทศ
+- กราฟเปรียบเทียบในกลุ่มจังหวัดใกล้เคียง (Peer Comparison) พร้อมเส้นค่าเฉลี่ยภูมิภาคและมัธยฐานประเทศ
 - กราฟหน่วยงานที่ได้รับงบสูงสุดในจังหวัด และตารางสืบค้นรายการโครงการงบประมาณ
 
 ### 3. 📈 งบประมาณและเศรษฐกิจจังหวัด (Budget × GPP)
 - แผนภาพการกระจายตัว (Interactive Scatter Plot) พร้อมเส้นอ้างอิงค่ามัธยฐานแบ่ง 4 Quadrant:
-  - **Q1 (Core Hub)**: ศักยภาพสูง - งบประมาณสูง
-  - **Q2 (High Efficiency)**: ศักยภาพสูง - งบประมาณต่ำ
-  - **Q3 (Emerging Area)**: ศักยภาพพื้นฐาน - งบประมาณต่ำ
-  - **Q4 (Special Support)**: ศักยภาพพื้นฐาน - งบประมาณสูง
-- **ขนาดของจุด (Bubble Size)**: แปรผันตรงตามจำนวนประชากรของจังหวัด ($\sqrt{\text{Population}}$)
+  - **Q1: ศักยภาพสูง - งบประมาณสูง (Core Economic Hubs)** เช่น เชียงใหม่, นครราชสีมา, ชลบุรี
+  - **Q2: ศักยภาพสูง - งบประมาณต่ำ (High Economic Efficiency)** เช่น ระยอง, สระบุรี, พระนครศรีอยุธยา
+  - **Q3: ศักยภาพพื้นฐาน - งบประมาณต่ำ (Emerging / Developing)** เช่น แม่ฮ่องสอน, พะเยา, อุทัยธานี
+  - **Q4: ศักยภาพพื้นฐาน - งบประมาณสูง (Targeted Support Area)** เช่น ปัตตานี, ยะลา, นราธิวาส, สุรินทร์
+- **ขนาดจุด**: แปรผันตรงกับจำนวนประชากรของจังหวัด
 - สวิตช์ควบคุม:
-  - `⚡ ไม่รวม กรุงเทพฯ และ นนทบุรี`: คัดกรองค่าผิดปกติจากที่ตั้งกระทรวงส่วนกลาง
-  - `👤 ต่อหัวประชากร`: สลับระหว่างยอดรวมกับตัวเลขต่อหัวประชากร
-  - `📐 Logarithmic Scale`: ปรับสเกลกราฟให้กระจายตัวชัดเจน
-- ตัวชี้วัดสหสัมพันธ์: Pearson correlation ($r$), Spearman correlation ($r$), และ $p$-value
-- ตารางสรุปการจัดกลุ่ม Quadrant รายจังหวัดอย่างละเอียด
+  - `⚡ ไม่รวม กรุงเทพฯ และ นนทบุรี`: ป้องกันการบิดเบือนจากที่ตั้งกระทรวงส่วนกลาง
+  - `👤 ต่อหัวประชากร`: สลับเป็นตัวเลขต่อหัวประชากร
+  - `📐 Logarithmic Scale`: ปรับสเกลให้อ่านจุดที่ซ้อนทับกันได้ชัดเจน
+- ตัวชี้วัดสหสัมพันธ์: Pearson ($r$), Spearman ($r$), และ $p$-value พร้อมตารางจัดกลุ่มรายจังหวัด
 
 ### 4. 🗳️ พรรคการเมืองและเศรษฐกิจจังหวัด (Party × GPP)
-- **กล่องข้อความเตือนทางวิชาการ (Methodological Notice)**:
-  - ระบุชัดเจนว่า **Correlation $\neq$ Causation** เนื่องจาก พ.ร.บ. งบประมาณ 2566 จัดทำขึ้นล่วงหน้าในปี 2565 ก่อนการเลือกตั้งทั่วไปในเดือน พ.ค. 2566
-- ตารางสรุปสถิติเชิงพรรณนาตามพรรคการเมือง: จำนวนจังหวัดที่ชนะ, งบประมาณรวม, ค่ามัธยฐานงบประมาณ, ค่ามัธยฐาน GPP, และอัตราการเติบโตทางเศรษฐกิจ
-- Box Plot การกระจายตัวของ GPP และงบประมาณจำแนกตามพรรคการเมือง **(คลิกเพื่อกรองพรรค)**
+- **กล่องข้อความเตือนทางวิชาการ (Methodological Notice)**: ป้องกันการตีความสหสัมพันธ์เป็นเหตุเป็นผล
+- ตารางสรุปสถิติเชิงพรรณนาตามพรรคการเมือง: จำนวนจังหวัดที่ชนะ, งบรวม, มัธยฐานงบ, มัธยฐาน GPP
+- Box Plot การกระจายตัวของ GPP และงบประมาณจำแนกตามพรรคการเมือง พร้อมระบบป้องกัน Sample Size ต่ำ
 - Bubble Scatter Plot จำแนกสีตามพรรคการเมือง โดยขนาดจุดเท่ากับขนาดประชากร
 
 ---
 
-## 📁 โครงสร้างโปรเจกต์ (Project Structure)
+## 📁 โครงสร้างโปรเจกต์ (Clean Project Architecture)
+
 ```text
 project_BP_group8/
-├── main.py                     # FastAPI Backend Application (API Endpoints & Static Mounting)
-├── run.py                      # One-click Server Runner (รองรับ Localhost & LAN IP)
-├── share_online.bat            # สคริปต์เปิด Cloudflare Tunnel สำหรับแชร์ลิงก์ด่วน
-├── Dockerfile                  # คอนฟิก Docker สำหรับ Deploy บนคลาวด์ทุกแพลตฟอร์ม
-├── Procfile                    # คอนฟิก PaaS Deployment (Render / Heroku / Railway)
-├── render.yaml                 # Blueprint อัตโนมัติสำหรับการ Deploy บน Render.com
-├── .python-version             # ระบุเวอร์ชัน Python 3.12.7 สำหรับ Render
-├── requirements.txt            # รายการไลบรารี Python (fastapi, uvicorn, pandas, ...)
-├── data/                       # โฟลเดอร์ชุดข้อมูลจริงปี 2566
-│   ├── provincial_budget.csv   # ข้อมูลงบประมาณ พ.ศ. 2566 (Delimiter: |)
-│   ├── gdp.csv                 # ข้อมูล GPP, ประชากร, GPP ต่อหัว (เฉพาะปี 2566)
-│   └── partylist.csv           # ข้อมูลพรรคการเมืองรายจังหวัด
-├── src/                        # Data Pipeline & Business Logic
+├── data/                               # ชุดข้อมูลจริงปี 2566
+│   ├── provincial_budget.csv           # ข้อมูลงบประมาณ พ.ศ. 2566 (Delimiter: |)
+│   ├── gdp.csv                         # ข้อมูล GPP, ประชากร, GPP ต่อหัว (ปี 2566)
+│   └── partylist.csv                   # ข้อมูลผลการเลือกตั้งพรรคการเมืองรายจังหวัด
+├── src/                                # โมดูลประมวลผลข้อมูล (Data Pipeline)
 │   ├── __init__.py
-│   ├── load_data.py            # การโหลดไฟล์ CSV และตรวจจับ Delimiter
-│   ├── clean_data.py           # การทำมาตรฐานชื่อจังหวัด และ 6 ภูมิภาคตามสภาพัฒน์
-│   └── metrics.py              # คำนวณ KPIs, สหสัมพันธ์, Quadrant, Party Summary
-├── static/                     # Modern Glassmorphism Single-Page Application (SPA)
-│   ├── index.html              # หน้าจอ HTML ภาษาไทยสมบูรณ์
+│   ├── load_data.py                    # ตรวจจับ Delimiter และโหลดไฟล์ข้อมูล
+│   ├── clean_data.py                   # ปรับมาตรฐานชื่อจังหวัด และจัด 6 ภูมิภาค
+│   └── metrics.py                      # คำนวณ KPIs, สหสัมพันธ์, Quadrant, Party Profile
+├── static/                             # หน้าเว็บ Frontend (Single-Page Application)
+│   ├── index.html                      # โครงสร้างหน้าเว็บภาษาไทย Glassmorphism
 │   ├── css/
-│   │   └── style.css           # ธีม Deep Navy, Glassmorphism, Responsive Grid
+│   │   └── style.css                   # สไตล์ชีท Deep Navy, Responsive Grid
 │   ├── data/
-│   │   └── thailand_provinces.geojson # ข้อมูลภูมิสารสนเทศ 77 จังหวัด
+│   │   └── thailand_provinces.geojson  # ข้อมูลพิกัดภูมิศาสตร์ 77 จังหวัด
 │   └── js/
-│       ├── state.js            # Shared Filter State Bus (Cross-Filtering)
-│       ├── api.js              # Fetch API wrappers
-│       ├── charts.js           # Plotly.js chart renderers with linked highlighting
-│       └── app.js              # UI controller, routing, and DOM bindings
-├── tests/                      # ชุดทดสอบอัตโนมัติ 19 รายการ (Automated Test Suite)
-│   ├── __init__.py
-│   ├── test_data_pipeline.py   # ทดสอบ Data Cleaning, Reconciliation, Formulas
-│   └── test_api.py             # ทดสอบ FastAPI Endpoints (TestClient)
-├── .gitignore                  # Git Ignore configuration
-└── README.md                   # คู่มือระบบฉบับสมบูรณ์
+│       ├── state.js                    # ตัวจัดการ State ส่วนกลาง
+│       ├── api.js                      # Fetch API เชื่อมต่อกับ Backend
+│       ├── charts.js                   # ฟังก์ชันวาดกราฟ Plotly และ Linked Highlighting
+│       └── app.js                      # ตัวควบคุม Event และ Routing ระหว่างหน้า
+├── .gitignore                          # กำหนดการละเว้นไฟล์แคช/ไฟล์ขยะ
+├── .python-version                     # ระบุ Python 3.12.7 สำหรับ Cloud Build
+├── Dockerfile                          # คอนฟิก Container สำหรับรันบนคลาวด์
+├── Procfile                            # คอนฟิก Web Process สำหรับ PaaS
+├── render.yaml                         # Blueprint สำหรับ Deploy อัตโนมัติบน Render.com
+├── requirements.txt                    # รายการไลบรารีเฉพาะที่จำเป็นสำหรับการรันเว็บ
+├── main.py                             # จุดเชื่อมต่อหลัก FastAPI Backend
+├── run.py                              # สคริปต์รันเซิร์ฟเวอร์ (รองรับทั้ง localhost และ IP ภายในวง LAN)
+├── Project_Colab_group8.ipynb          # โน้ตบุ๊ก Google Colab สำหรับการวิเคราะห์เชิงลึกของทีม
+└── README.md                           # เอกสารอธิบายโครงงานฉบับสมบูรณ์
 ```
 
 ---
 
 ## 🚀 วิธีการเริ่มใช้งานและการ Deploy (Running & Deployment)
 
-### วิธีที่ 1: รันในเครื่องคอมพิวเตอร์ (Local Development)
+### วิธีที่ 1: รันในเครื่องคอมพิวเตอร์ (Local / LAN)
 ```bash
-# 1. ติดตั้ง Dependencies
+# 1. ติดตั้งไลบรารี
 pip install -r requirements.txt
 
-# 2. รันเซิร์ฟเวอร์
+# 2. เริ่มเซิร์ฟเวอร์
 python run.py
 ```
-เปิดเว็บเบราว์เซอร์ไปที่:
-* บนคอมพิวเตอร์เครื่องนี้: **[http://localhost:8000](http://localhost:8000)**
-* บนคอมพิวเตอร์เครื่องอื่นใน Wi-Fi เดียวกัน: **`http://<IP-เครื่อง>:8000`**
+* **เปิดจากคอมเครื่องนี้**: [http://localhost:8000](http://localhost:8000)
+* **เปิดจากอุปกรณ์อื่นในวง Wi-Fi เดียวกัน**: `http://<IP-เครื่องนี้>:8000` *(ระบบจะแสดง IP ให้บนหน้าต่าง Terminal อัตโนมัติ)*
 
-### วิธีที่ 2: แชร์ออนไลน์ผ่าน Cloudflare Tunnel (ไม่ต้องเปิดพอร์ต)
-ดับเบิลคลิกไฟล์ **`share_online.bat`** เพื่อสร้างลิงก์ HTTPS ชั่วคราวส่งให้เพื่อนได้ทันที
+### วิธีที่ 2: รันผ่าน Docker Container
+```bash
+# Build Image
+docker build -t budget-dashboard .
 
-### วิธีที่ 3: Deploy ออนไลน์ 24 ชั่วโมงบน Render.com (ฟรี ไม่ต้องเปิดคอมทิ้งไว้)
-1. ดันโค้ดขึ้น GitHub: `git push origin main`
+# Run Container
+docker run -d -p 8000:8000 --name budget-dashboard budget-dashboard
+```
+
+### วิธีที่ 3: Deploy ออนไลน์ 24 ชั่วโมงบน Render.com (ฟรี เพื่อนเปิดได้ตลอดเวลา)
+1. ส่งโค้ดขึ้น GitHub: `git push origin main`
 2. เข้าสู่ระบบ [render.com](https://render.com) ด้วยบัญชี GitHub
 3. เลือก **New +** ➔ **Web Service** ➔ เลือก Repository `project_BP_group8`
 4. ตั้งค่า:
@@ -149,12 +167,4 @@ python run.py
    - **Build Command:** `pip install -r requirements.txt`
    - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
    - **Instance Type:** `Free`
-5. กด **Create Web Service** จะได้ลิงก์ถาวร เช่น `https://<ชื่อเว็บ>.onrender.com` ใช้งานได้ตลอดเวลา
-
----
-
-### 🧪 รันชุดทดสอบอัตโนมัติ (Automated Tests)
-```bash
-python -m pytest -v
-```
-**ผลลัพธ์การทดสอบ: ผ่าน 19/19 การทดสอบ (100% Passed)** ครอบคลุมทั้ง Data Pipeline, ความถูกต้องของงบประมาณปี 2566, สถิติสหสัมพันธ์, และ API ทุก Endpoint
+5. กดปุ่ม **Create Web Service** จะได้ลิงก์สาธารณะใช้งานได้ตลอด 24 ชั่วโมง เช่น `https://<ชื่อเว็บ>.onrender.com`
