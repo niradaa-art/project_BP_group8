@@ -1,17 +1,12 @@
 # Provincial Budget Intelligence Dashboard (Thailand FY 2566)
 ### ระบบวิเคราะห์งบประมาณรายจังหวัด ผลิตภัณฑ์มวลรวม (GPP) และเศรษฐกิจการเมืองไทยเชิงพื้นที่
-**สถาปัตยกรรมระบบ: FastAPI Backend + Modern Glassmorphism Single-Page Application (Plotly.js + Vanilla JS)**
-
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
-[![Plotly.js](https://img.shields.io/badge/Plotly.js-2.35+-3F4F75.svg)](https://plotly.com/javascript/)
-[![Data Year](https://img.shields.io/badge/Data%20Scope-FY%202566%20Only-emerald.svg)]()
 
 ---
 
 ## 📌 ข้อมูลโครงงานและคณะผู้จัดทำ
 - **ชุดข้อมูลต้นฉบับ**: [Google Drive Folder](https://drive.google.com/drive/folders/1m6hp8l6iMB1u-a1yNK4laewgrUTy_Bnl?usp=drive_link)
 - **สไลด์นำเสนอโครงงาน**: [Canva Presentation](https://canva.link/ulpsfg5b8synm67)
+- **Dashboard**: [Dashboard](https://project-bp-group8.onrender.com/)
 - **สมาชิกกลุ่ม 8 (MONEY_knock_everyting)**:
   - ณิรดา อนุนิวัฒน์ — Data Engineering & Preparation
   - ธนพล — Data Analysis & Questions Formulation
