@@ -105,6 +105,8 @@
           </div>
           <div style="display:flex;gap:10px;align-items:center;">
             <button id="btn-banner-drilldown" class="btn-clear" style="background:rgba(6,182,212,0.25);border-color:var(--accent-cyan);color:#67e8f9;">🔍 ไปหน้าเจาะลึกจังหวัดนี้</button>
+            <button id="btn-banner-econ" class="btn-clear" style="background:rgba(139,92,246,0.25);border-color:#8b5cf6;color:#c4b5fd;">📈 กราฟ Quadrant</button>
+            <button id="btn-banner-party" class="btn-clear" style="background:rgba(236,72,153,0.25);border-color:#ec4899;color:#f472b6;">🔮 กราฟพรรคการเมือง</button>
             <button id="btn-clear-prov-banner" class="btn-clear">ยกเลิกไฮไลต์ (✕)</button>
           </div>
         </div>
@@ -365,6 +367,18 @@
           </div>
         </div>
 
+        <!-- Province Selection Banner in Economy View -->
+        <div id="econ-selection-banner" class="selection-banner" style="display: none; border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.1); margin-bottom: 20px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:#06b6d4;font-weight:600;">📍 กำลังแสดงเฉพาะจังหวัด:</span>
+            <strong id="econ-selected-prov-name" style="color:#fff;font-size:16px;"></strong>
+            <span class="card-badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);margin-left:6px;">เลือกมาจากหน้าแรก</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button id="btn-clear-econ-prov" class="btn-clear">✕ แสดงทุกจังหวัด</button>
+          </div>
+        </div>
+
         <!-- Scatter Plot with Quadrants -->
         <div class="glass-card">
           <div class="card-header">
@@ -413,6 +427,18 @@
           </div>
           <div class="data-table-container">
             <table class="data-table" id="table-party-summary"></table>
+          </div>
+        </div>
+
+        <!-- Province Selection Banner in Party View -->
+        <div id="party-selection-banner" class="selection-banner" style="display: none; border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.1); margin-bottom: 20px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:#06b6d4;font-weight:600;">📍 กำลังแสดงเฉพาะจังหวัด:</span>
+            <strong id="party-selected-prov-name" style="color:#fff;font-size:16px;"></strong>
+            <span class="card-badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);margin-left:6px;">เลือกมาจากหน้าแรก</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button id="btn-clear-party-prov" class="btn-clear">✕ แสดงทุกจังหวัด</button>
           </div>
         </div>
 

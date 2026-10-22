@@ -30,6 +30,9 @@ const THEME_LAYOUT = {
     gridcolor: "rgba(255, 255, 255, 0.08)",
     zerolinecolor: "rgba(255, 255, 255, 0.15)",
     tickfont: { color: "#94a3b8", size: 11 },
+    ticks: "outside",
+    ticklen: 8,
+    tickcolor: "rgba(0,0,0,0)",
   },
   hoverlabel: {
     bgcolor: "#0f172a",
@@ -78,9 +81,16 @@ const chartHelper = {
 
     const layout = {
       ...THEME_LAYOUT,
-      margin: { l: 120, r: 20, t: 20, b: 35 },
+      margin: { l: 135, r: 25, t: 20, b: 35 },
       xaxis: { ...THEME_LAYOUT.xaxis, title: unit },
-      yaxis: { ...THEME_LAYOUT.yaxis, automargin: true },
+      yaxis: {
+        ...THEME_LAYOUT.yaxis,
+        automargin: true,
+        ticks: "outside",
+        ticklen: 12,
+        tickcolor: "rgba(0,0,0,0)",
+        ticksuffix: "   ",
+      },
     };
 
     Plotly.newPlot(containerId, [trace], layout, { responsive: true, displayModeBar: false });
@@ -137,14 +147,100 @@ const chartHelper = {
     }
   },
 
-  // 3. Scatter plot with quadrants & click-to-select province
-  renderScatterQuadrant: (containerId, analysisData, onPointClick = null, logScale = false) => {
+  // Helper to enable interactive hover dimming on scatter/bubble charts
+  enableScatterHoverDimming: (el) => {
+    if (!el) return;
+    el.classList.remove("scatter-hover-active");
+
+    const clearHover = () => {
+      el.classList.remove("scatter-hover-active");
+      const hovered = el.querySelectorAll(".point.point-hovered");
+      hovered.forEach((p) => p.classList.remove("point-hovered"));
+    };
+
+    if (el.removeAllListeners) {
+      el.removeAllListeners("plotly_hover");
+      el.removeAllListeners("plotly_unhover");
+    }
+
+    el.on("plotly_hover", (data) => {
+      if (!data || !data.points || !data.points.length) return;
+      const pt = data.points[0];
+      const curveNumber = pt.curveNumber;
+      const pointNumber = pt.pointNumber;
+
+      const traceEls = el.querySelectorAll(".scatterlayer .trace");
+      let targetPoint = null;
+
+      if (traceEls && traceEls[curveNumber]) {
+        const pointEls = traceEls[curveNumber].querySelectorAll("path.point");
+        if (pointEls && pointEls[pointNumber]) {
+          targetPoint = pointEls[pointNumber];
+        }
+      }
+
+      // Fallback matching by text/name if trace DOM ordering differs
+      if (!targetPoint && pt.text) {
+        const allPoints = el.querySelectorAll(".scatterlayer path.point");
+        for (let i = 0; i < allPoints.length; i++) {
+          const d = allPoints[i].__data__;
+          if (d && (d.tx === pt.text || d.text === pt.text)) {
+            targetPoint = allPoints[i];
+            break;
+          }
+        }
+      }
+
+      if (!targetPoint) return;
+
+      const prevHovered = el.querySelectorAll(".point.point-hovered");
+      prevHovered.forEach((p) => {
+        if (p !== targetPoint) p.classList.remove("point-hovered");
+      });
+
+      targetPoint.classList.add("point-hovered");
+      el.classList.add("scatter-hover-active");
+    });
+
+    el.on("plotly_unhover", () => {
+      clearHover();
+    });
+
+    if (el._scatterMouseLeaveHandler) {
+      el.removeEventListener("mouseleave", el._scatterMouseLeaveHandler);
+    }
+    el._scatterMouseLeaveHandler = clearHover;
+    el.addEventListener("mouseleave", el._scatterMouseLeaveHandler);
+  },
+
+  // 3. Scatter plot with quadrants & click-to-select province (supports linked single province view)
+  renderScatterQuadrant: (containerId, analysisData, onPointClick = null, logScale = false, selectedProvince = null) => {
     const el = document.getElementById(containerId);
     if (!el || !analysisData || !analysisData.provinces) return;
 
-    const points = analysisData.provinces;
+    const allPoints = analysisData.provinces;
     const xMed = analysisData.x_median;
     const yMed = analysisData.y_median;
+
+    // Filter to single province if selectedProvince is provided
+    let points = allPoints;
+    let singleSelectedPoint = null;
+    if (selectedProvince) {
+      const cleanSelected = selectedProvince.replace("จังหวัด", "").trim();
+      const match = allPoints.find((p) => p.province.replace("จังหวัด", "").trim() === cleanSelected);
+      if (match) {
+        points = [match];
+        singleSelectedPoint = match;
+      }
+    }
+
+    // Calculate global domain so coordinate frame & median benchmarks remain stable
+    const allXVals = allPoints.map((p) => p.x_val).filter((v) => v > 0);
+    const allYVals = allPoints.map((p) => p.y_val).filter((v) => v > 0);
+    const xMin = Math.min(...allXVals, xMed);
+    const xMax = Math.max(...allXVals, xMed);
+    const yMin = Math.min(...allYVals, yMed);
+    const yMax = Math.max(...allYVals, yMed);
 
     // Group by region for color legend
     const regions = [...new Set(points.map((p) => p.region))];
@@ -168,10 +264,14 @@ const chartHelper = {
         text: regPoints.map((p) => p.province),
         customdata: regPoints.map((p) => [p.party, p.budget_million, p.gpp_million, p.quadrant, p.pop_person]),
         marker: {
-          size: regPoints.map((p) => Math.max(9, Math.min(28, Math.sqrt(p.pop_person) / 75))),
+          size: regPoints.map((p) =>
+            singleSelectedPoint
+              ? Math.max(16, Math.min(32, Math.sqrt(p.pop_person) / 60))
+              : Math.max(9, Math.min(28, Math.sqrt(p.pop_person) / 75))
+          ),
           color: regionColors[reg] || "#94a3b8",
-          opacity: 0.88,
-          line: { color: "#fff", width: 1.2 },
+          opacity: 0.92,
+          line: { color: "#fff", width: singleSelectedPoint ? 2.5 : 1.2 },
         },
         hovertemplate:
           "<b>%{text}</b> (%{data.name})<br>" +
@@ -182,6 +282,90 @@ const chartHelper = {
       };
     });
 
+    const annotations = [
+      {
+        x: xMed,
+        y: 1,
+        xref: "x",
+        yref: "paper",
+        text: `มัธยฐาน X: ${xMed.toLocaleString()}`,
+        showarrow: false,
+        font: { color: "#06b6d4", size: 10 },
+        align: "left",
+      },
+      {
+        x: 1,
+        y: yMed,
+        xref: "paper",
+        yref: "y",
+        text: `มัธยฐาน Y: ${yMed.toLocaleString()}`,
+        showarrow: false,
+        font: { color: "#06b6d4", size: 10 },
+        align: "right",
+      },
+      // 4 Quadrants Analytical Labels
+      {
+        x: 0.98,
+        y: 0.96,
+        xref: "paper",
+        yref: "paper",
+        text: "<b>Q1: ศักยภาพสูง - งบประมาณสูง</b><br>Core Economic Hubs",
+        showarrow: false,
+        font: { color: "rgba(6, 182, 212, 0.7)", size: 10 },
+        align: "right",
+      },
+      {
+        x: 0.02,
+        y: 0.96,
+        xref: "paper",
+        yref: "paper",
+        text: "<b>Q2: ศักยภาพสูง - งบประมาณต่ำ</b><br>High Economic Efficiency",
+        showarrow: false,
+        font: { color: "rgba(16, 185, 129, 0.7)", size: 10 },
+        align: "left",
+      },
+      {
+        x: 0.02,
+        y: 0.04,
+        xref: "paper",
+        yref: "paper",
+        text: "<b>Q3: ศักยภาพพื้นฐาน - งบประมาณต่ำ</b><br>Emerging / Developing",
+        showarrow: false,
+        font: { color: "rgba(148, 163, 184, 0.7)", size: 10 },
+        align: "left",
+      },
+      {
+        x: 0.98,
+        y: 0.04,
+        xref: "paper",
+        yref: "paper",
+        text: "<b>Q4: ศักยภาพพื้นฐาน - งบประมาณสูง</b><br>Targeted Support Area",
+        showarrow: false,
+        font: { color: "rgba(245, 158, 11, 0.7)", size: 10 },
+        align: "right",
+      },
+    ];
+
+    if (singleSelectedPoint) {
+      annotations.push({
+        x: singleSelectedPoint.x_val,
+        y: singleSelectedPoint.y_val,
+        text: `📍 <b>${singleSelectedPoint.province}</b><br><span style="font-size:11px;">${singleSelectedPoint.quadrant}</span>`,
+        showarrow: true,
+        arrowhead: 2,
+        arrowsize: 1,
+        arrowwidth: 1.5,
+        arrowcolor: "#06b6d4",
+        ax: 0,
+        ay: -45,
+        bgcolor: "rgba(15, 23, 42, 0.92)",
+        bordercolor: "#06b6d4",
+        borderwidth: 1.5,
+        borderpad: 6,
+        font: { color: "#f8fafc", size: 12 },
+      });
+    }
+
     const layout = {
       ...THEME_LAYOUT,
       margin: { l: 65, r: 25, t: 25, b: 55 },
@@ -189,11 +373,17 @@ const chartHelper = {
         ...THEME_LAYOUT.xaxis,
         title: analysisData.x_var === "budget_per_capita_thb" ? "งบประมาณต่อหัว (บาท/คน)" : "งบประมาณรายจังหวัด (ล้านบาท)",
         type: logScale ? "log" : "linear",
+        range: singleSelectedPoint
+          ? (logScale ? [Math.log10(xMin * 0.7), Math.log10(xMax * 1.25)] : [0, xMax * 1.08])
+          : undefined,
       },
       yaxis: {
         ...THEME_LAYOUT.yaxis,
         title: analysisData.y_var === "gpp_per_capita_thb" ? "GPP ต่อหัว (บาท/คน)" : "ผลิตภัณฑ์มวลรวมจังหวัด GPP (ล้านบาท)",
         type: logScale ? "log" : "linear",
+        range: singleSelectedPoint
+          ? (logScale ? [Math.log10(yMin * 0.7), Math.log10(yMax * 1.25)] : [0, yMax * 1.08])
+          : undefined,
       },
       legend: {
         orientation: "h",
@@ -223,72 +413,15 @@ const chartHelper = {
           line: { color: "rgba(255, 255, 255, 0.35)", width: 1.5, dash: "dash" },
         },
       ],
-      annotations: [
-        {
-          x: xMed,
-          y: 1,
-          xref: "x",
-          yref: "paper",
-          text: `มัธยฐาน X: ${xMed.toLocaleString()}`,
-          showarrow: false,
-          font: { color: "#06b6d4", size: 10 },
-          align: "left",
-        },
-        {
-          x: 1,
-          y: yMed,
-          xref: "paper",
-          yref: "y",
-          text: `มัธยฐาน Y: ${yMed.toLocaleString()}`,
-          showarrow: false,
-          font: { color: "#06b6d4", size: 10 },
-          align: "right",
-        },
-        // 4 Quadrants Analytical Labels
-        {
-          x: 0.98,
-          y: 0.96,
-          xref: "paper",
-          yref: "paper",
-          text: "<b>Q1: ศักยภาพสูง - งบประมาณสูง</b><br>Core Economic Hubs",
-          showarrow: false,
-          font: { color: "rgba(6, 182, 212, 0.7)", size: 10 },
-          align: "right",
-        },
-        {
-          x: 0.02,
-          y: 0.96,
-          xref: "paper",
-          yref: "paper",
-          text: "<b>Q2: ศักยภาพสูง - งบประมาณต่ำ</b><br>High Economic Efficiency",
-          showarrow: false,
-          font: { color: "rgba(16, 185, 129, 0.7)", size: 10 },
-          align: "left",
-        },
-        {
-          x: 0.02,
-          y: 0.04,
-          xref: "paper",
-          yref: "paper",
-          text: "<b>Q3: ศักยภาพพื้นฐาน - งบประมาณต่ำ</b><br>Emerging / Developing",
-          showarrow: false,
-          font: { color: "rgba(148, 163, 184, 0.7)", size: 10 },
-          align: "left",
-        },
-        {
-          x: 0.98,
-          y: 0.04,
-          xref: "paper",
-          yref: "paper",
-          text: "<b>Q4: ศักยภาพพื้นฐาน - งบประมาณสูง</b><br>Targeted Support Area",
-          showarrow: false,
-          font: { color: "rgba(245, 158, 11, 0.7)", size: 10 },
-          align: "right",
-        },
-      ],
+      annotations: annotations,
     };
 
-    Plotly.newPlot(containerId, traces, layout, { responsive: true, displayModeBar: false });
+        const plotPromise = Plotly.newPlot(containerId, traces, layout, { responsive: true, displayModeBar: false });
+    if (plotPromise && typeof plotPromise.then === "function") {
+      plotPromise.then(() => chartHelper.enableScatterHoverDimming(el));
+    } else {
+      chartHelper.enableScatterHoverDimming(el);
+    }
 
     if (onPointClick) {
       el.removeAllListeners && el.removeAllListeners("plotly_click");
@@ -464,10 +597,28 @@ const chartHelper = {
     }
   },
 
-  // 7. Party Bubble Scatter
-  renderPartyBubbleScatter: (containerId, points, onSelect = null) => {
+  // 7. Party Bubble Scatter (supports linked single province view)
+  renderPartyBubbleScatter: (containerId, allPoints, onSelect = null, selectedProvince = null) => {
     const el = document.getElementById(containerId);
-    if (!el || !points || points.length === 0) return;
+    if (!el || !allPoints || allPoints.length === 0) return;
+
+    // Filter to single province if selectedProvince is provided
+    let points = allPoints;
+    let singleSelectedPoint = null;
+    if (selectedProvince) {
+      const cleanSelected = selectedProvince.replace("จังหวัด", "").trim();
+      const match = allPoints.find((p) => p.province.replace("จังหวัด", "").trim() === cleanSelected);
+      if (match) {
+        points = [match];
+        singleSelectedPoint = match;
+      }
+    }
+
+    // Calculate global domain so coordinate frame remains stable
+    const allXVals = allPoints.map((p) => p.budget_million).filter((v) => v > 0);
+    const allYVals = allPoints.map((p) => p.gpp_million).filter((v) => v > 0);
+    const xMax = Math.max(...allXVals);
+    const yMax = Math.max(...allYVals);
 
     const parties = [...new Set(points.map((p) => p.party_name))];
 
@@ -482,10 +633,14 @@ const chartHelper = {
         text: ptyPoints.map((p) => p.province),
         customdata: ptyPoints.map((p) => [p.pop_person]),
         marker: {
-          size: ptyPoints.map((p) => Math.max(8, Math.min(26, Math.sqrt(p.pop_person) / 75))),
+          size: ptyPoints.map((p) =>
+            singleSelectedPoint
+              ? Math.max(16, Math.min(32, Math.sqrt(p.pop_person) / 60))
+              : Math.max(8, Math.min(26, Math.sqrt(p.pop_person) / 75))
+          ),
           color: PARTY_COLORS[pty] || "#94a3b8",
-          opacity: 0.85,
-          line: { color: "#fff", width: 1 },
+          opacity: 0.9,
+          line: { color: "#fff", width: singleSelectedPoint ? 2.5 : 1 },
         },
         hovertemplate:
           "<b>%{text}</b><br>พรรค: " +
@@ -494,11 +649,40 @@ const chartHelper = {
       };
     });
 
+    const annotations = [];
+    if (singleSelectedPoint) {
+      annotations.push({
+        x: singleSelectedPoint.budget_million,
+        y: singleSelectedPoint.gpp_million,
+        text: `📍 <b>${singleSelectedPoint.province}</b><br><span style="font-size:11px;">พรรค: ${singleSelectedPoint.party_name}</span>`,
+        showarrow: true,
+        arrowhead: 2,
+        arrowsize: 1,
+        arrowwidth: 1.5,
+        arrowcolor: PARTY_COLORS[singleSelectedPoint.party_name] || "#06b6d4",
+        ax: 0,
+        ay: -45,
+        bgcolor: "rgba(15, 23, 42, 0.92)",
+        bordercolor: PARTY_COLORS[singleSelectedPoint.party_name] || "#06b6d4",
+        borderwidth: 1.5,
+        borderpad: 6,
+        font: { color: "#f8fafc", size: 12 },
+      });
+    }
+
     const layout = {
       ...THEME_LAYOUT,
       margin: { l: 60, r: 20, t: 20, b: 50 },
-      xaxis: { ...THEME_LAYOUT.xaxis, title: "งบประมาณรายจังหวัด (ล้านบาท)" },
-      yaxis: { ...THEME_LAYOUT.yaxis, title: "ผลิตภัณฑ์มวลรวมจังหวัด GPP (ล้านบาท)" },
+      xaxis: {
+        ...THEME_LAYOUT.xaxis,
+        title: "งบประมาณรายจังหวัด (ล้านบาท)",
+        range: singleSelectedPoint ? [0, xMax * 1.08] : undefined,
+      },
+      yaxis: {
+        ...THEME_LAYOUT.yaxis,
+        title: "ผลิตภัณฑ์มวลรวมจังหวัด GPP (ล้านบาท)",
+        range: singleSelectedPoint ? [0, yMax * 1.08] : undefined,
+      },
       legend: {
         orientation: "h",
         yanchor: "bottom",
@@ -507,9 +691,15 @@ const chartHelper = {
         x: 1,
         font: { color: "#94a3b8", size: 10 },
       },
+      annotations: annotations,
     };
 
-    Plotly.newPlot(containerId, traces, layout, { responsive: true, displayModeBar: false });
+        const plotPromise = Plotly.newPlot(containerId, traces, layout, { responsive: true, displayModeBar: false });
+    if (plotPromise && typeof plotPromise.then === "function") {
+      plotPromise.then(() => chartHelper.enableScatterHoverDimming(el));
+    } else {
+      chartHelper.enableScatterHoverDimming(el);
+    }
 
     if (onSelect) {
       el.removeAllListeners && el.removeAllListeners("plotly_click");

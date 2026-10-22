@@ -163,6 +163,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (bannerDrilldown) {
           bannerDrilldown.onclick = () => switchTab("province");
         }
+        const bannerEcon = document.getElementById("btn-banner-econ");
+        if (bannerEcon) {
+          bannerEcon.onclick = () => switchTab("economy");
+        }
+        const bannerParty = document.getElementById("btn-banner-party");
+        if (bannerParty) {
+          bannerParty.onclick = () => switchTab("party");
+        }
       } else {
         banner.style.display = "none";
       }
@@ -426,15 +434,45 @@ document.addEventListener("DOMContentLoaded", async () => {
   // View 3: งบประมาณและเศรษฐกิจจังหวัด (Budget × GPP)
   // ---------------------------------------------------------------------------
   async function renderEconomyView(curState) {
-    const excludeOutliers = document.getElementById("toggle-outliers-econ")?.checked ?? curState.excludeOutliers;
+    let excludeOutliers = document.getElementById("toggle-outliers-econ")?.checked ?? curState.excludeOutliers;
     const perCapita = document.getElementById("toggle-percapita-econ")?.checked ?? curState.perCapitaMode;
     const logScale = document.getElementById("toggle-logscale-econ")?.checked ?? false;
+
+    // If Bangkok or Nonthaburi is selected, make sure excludeOutliers doesn't filter it out
+    if (curState.selectedProvince && (curState.selectedProvince.includes("กรุงเทพ") || curState.selectedProvince.includes("นนทบุรี"))) {
+      excludeOutliers = false;
+      const toggle = document.getElementById("toggle-outliers-econ");
+      if (toggle) toggle.checked = false;
+    }
 
     try {
       const data = await api.getEconomyBudgetGpp(excludeOutliers, perCapita);
 
+      // Handle province filter banner in Economy view
+      const banner = document.getElementById("econ-selection-banner");
+      const cleanSelected = curState.selectedProvince ? curState.selectedProvince.replace("จังหวัด", "").trim() : null;
+      const matchedPoint = cleanSelected
+        ? data.provinces.find((p) => p.province.replace("จังหวัด", "").trim() === cleanSelected)
+        : null;
+
+      if (banner) {
+        if (curState.selectedProvince && matchedPoint) {
+          banner.style.display = "flex";
+          document.getElementById("econ-selected-prov-name").textContent = matchedPoint.province;
+          document.getElementById("btn-clear-econ-prov").onclick = () => {
+            state.clearProvince();
+          };
+        } else {
+          banner.style.display = "none";
+        }
+      }
+
       // Update Correlation Stat Cards
-      document.getElementById("econ-stat-count").textContent = `${data.n_provinces} จังหวัด`;
+      if (matchedPoint) {
+        document.getElementById("econ-stat-count").textContent = `1 จังหวัด (${matchedPoint.province})`;
+      } else {
+        document.getElementById("econ-stat-count").textContent = `${data.n_provinces} จังหวัด`;
+      }
       document.getElementById("econ-stat-pearson").textContent = data.pearson_r.toFixed(3);
       document.getElementById("econ-stat-spearman").textContent = data.spearman_r.toFixed(3);
       const pText = data.pearson_pval < 0.001 ? "< 0.001" : data.pearson_pval.toFixed(4);
@@ -448,11 +486,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           state.selectProvince(selectedProv);
           switchTab("province");
         },
-        logScale
+        logScale,
+        curState.selectedProvince
       );
 
-      // Render quadrant table summary
-      renderSimpleTable("table-econ-quadrants", data.provinces, [
+      // Render quadrant table summary (shows selected province or all)
+      const tableRows = matchedPoint ? [matchedPoint] : data.provinces;
+      renderSimpleTable("table-econ-quadrants", tableRows, [
         { key: "province", label: "จังหวัด" },
         { key: "region", label: "ภูมิภาค" },
         { key: "quadrant", label: "กลุ่ม Quadrant" },
@@ -481,11 +521,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   // View 4: พรรคการเมืองและเศรษฐกิจจังหวัด (Party × GPP)
   // ---------------------------------------------------------------------------
   async function renderPartyView(curState) {
-    const excludeOutliers = document.getElementById("toggle-outliers-party")?.checked ?? curState.excludeOutliers;
+    let excludeOutliers = document.getElementById("toggle-outliers-party")?.checked ?? curState.excludeOutliers;
     const selectedParty = curState.selectedParty;
+
+    // If Bangkok or Nonthaburi is selected, make sure excludeOutliers doesn't filter it out
+    if (curState.selectedProvince && (curState.selectedProvince.includes("กรุงเทพ") || curState.selectedProvince.includes("นนทบุรี"))) {
+      excludeOutliers = false;
+      const toggle = document.getElementById("toggle-outliers-party");
+      if (toggle) toggle.checked = false;
+    }
 
     try {
       const data = await api.getPartyGpp(excludeOutliers, selectedParty);
+
+      // Handle province filter banner in Party view
+      const banner = document.getElementById("party-selection-banner");
+      const cleanSelected = curState.selectedProvince ? curState.selectedProvince.replace("จังหวัด", "").trim() : null;
+      const matchedPoint = cleanSelected
+        ? data.provinces.find((p) => p.province.replace("จังหวัด", "").trim() === cleanSelected)
+        : null;
+
+      if (banner) {
+        if (curState.selectedProvince && matchedPoint) {
+          banner.style.display = "flex";
+          document.getElementById("party-selected-prov-name").textContent = matchedPoint.province;
+          document.getElementById("btn-clear-party-prov").onclick = () => {
+            state.clearProvince();
+          };
+        } else {
+          banner.style.display = "none";
+        }
+      }
 
       // Party Summary Table
       renderSimpleTable("table-party-summary", data.parties, [
@@ -503,11 +569,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         state.set("selectedParty", clickedParty);
       });
 
-      // Bubble scatter plot
-      charts.renderPartyBubbleScatter("chart-party-bubble", data.provinces, (selectedProv) => {
-        state.selectProvince(selectedProv);
-        switchTab("province");
-      });
+      // Bubble scatter plot (filtered if selectedProvince is set)
+      charts.renderPartyBubbleScatter(
+        "chart-party-bubble",
+        data.provinces,
+        (selectedProv) => {
+          state.selectProvince(selectedProv);
+          switchTab("province");
+        },
+        curState.selectedProvince
+      );
     } catch (e) {
       console.error("Error in renderPartyView:", e);
     }

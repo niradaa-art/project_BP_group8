@@ -552,3 +552,26 @@ body {
     padding: 16px;
   }
 }
+
+
+/* ==========================================================================
+   Plotly Scatter Chart Hover Dimming Effect
+   ========================================================================== */
+.scatterlayer .point {
+  cursor: pointer;
+  transition: opacity 0.18s ease, stroke-width 0.15s ease, filter 0.18s ease;
+}
+
+/* When any point is hovered, dim all other points and slightly reduce saturation */
+.scatter-hover-active .scatterlayer .point {
+  opacity: 0.15 !important;
+  filter: grayscale(40%);
+}
+
+/* Keep the hovered point vivid, fully opaque, and highlight with crisp white border and glow */
+.scatter-hover-active .scatterlayer .point.point-hovered {
+  opacity: 1 !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) grayscale(0%) !important;
+}
