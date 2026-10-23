@@ -436,7 +436,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function renderEconomyView(curState) {
     let excludeOutliers = document.getElementById("toggle-outliers-econ")?.checked ?? curState.excludeOutliers;
     const perCapita = document.getElementById("toggle-percapita-econ")?.checked ?? curState.perCapitaMode;
-    const logScale = document.getElementById("toggle-logscale-econ")?.checked ?? false;
+    const logScale = true;
 
     // If Bangkok or Nonthaburi is selected, make sure excludeOutliers doesn't filter it out
     if (curState.selectedProvince && (curState.selectedProvince.includes("กรุงเทพ") || curState.selectedProvince.includes("นนทบุรี"))) {
@@ -512,9 +512,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("toggle-percapita-econ")?.addEventListener("change", (e) => {
     state.set("perCapitaMode", e.target.checked);
-  });
-  document.getElementById("toggle-logscale-econ")?.addEventListener("change", () => {
-    renderEconomyView(state.getState());
   });
 
   // ---------------------------------------------------------------------------

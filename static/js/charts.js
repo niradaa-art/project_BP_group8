@@ -214,7 +214,7 @@ const chartHelper = {
   },
 
   // 3. Scatter plot with quadrants & click-to-select province (supports linked single province view)
-  renderScatterQuadrant: (containerId, analysisData, onPointClick = null, logScale = false, selectedProvince = null) => {
+  renderScatterQuadrant: (containerId, analysisData, onPointClick = null, logScale = true, selectedProvince = null) => {
     const el = document.getElementById(containerId);
     if (!el || !analysisData || !analysisData.provinces) return;
 
